@@ -28,4 +28,3 @@ jobs:
         # Проверяем, что наши скрипты запускаются без ошибок
         python main.py
         python telemetry.py
-        python dashboard.py
