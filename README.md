@@ -29,7 +29,7 @@ graph TD
 
 ## Технологии
 
-*   Python 3.9+
+*   Python 3.11+
 *   Git, GitHub Actions
 *   MySQL / PostgreSQL
 
@@ -87,7 +87,7 @@ python -m pytest -v --cov=telemetry --cov=diagnostics --cov=main --cov-branch
 
 В GitHub: **Actions → Python Tests → запуск → Tests / Python ...**.
 Доступен ручной запуск **Run workflow** с выбором ветки.
-Матрица запускает один набор тестов на Python 3.9, 3.12 и 3.13.
+Матрица запускает один набор тестов на Python 3.11, 3.12 и 3.13.
 Отчёты JUnit, XML и HTML покрытия сохраняются в **Artifacts** отдельно для
 каждой версии Python. Порог покрытия строк и ветвей — 90 %.
 
