@@ -1,0 +1,15 @@
+{
+  "equipment": 12,
+  "node_groups": 10,
+  "equipment_nodes": 24,
+  "specialists": 12,
+  "sensors": 36,
+  "telemetry": 432,
+  "failure_predictions": 12,
+  "spare_parts": 24,
+  "repair_orders": 12,
+  "diagnostics": 432,
+  "parts_used": 12,
+  "mylog": 12,
+  "order_status_history": 34
+}
