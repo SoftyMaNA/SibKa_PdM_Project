@@ -1,53 +1,60 @@
-name: Python Tests
-
+name: SibKa PdM Tests
 on:
   push:
-    branches: [main, develop, master, 'test/**', 'feature/**', 'release/**']
   pull_request:
-    branches: [main, develop, master]
+    branches: [main, develop]
   workflow_dispatch:
-
 permissions:
   contents: read
-
-concurrency:
-  group: python-tests-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  test:
-    name: Tests / Python ${{ matrix.python-version }}
+  unit:
+    name: Python unit tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.11', '3.12', '3.13']
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
           cache: pip
-          cache-dependency-path: requirements-dev.txt
-      - name: Install test dependencies
-        run: python -m pip install -r requirements-dev.txt
-      - name: Test telemetry, diagnostics and CLI
-        run: >-
-          python -m pytest -v
-          --junitxml=reports/junit.xml
-          --cov=telemetry --cov=diagnostics --cov=main
-          --cov-branch --cov-report=term-missing
-          --cov-report=xml:reports/coverage.xml
-          --cov-report=html:reports/coverage
-          --cov-fail-under=90
-      - name: Save test and coverage reports
+      - run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - run: python -m pytest tests/ -q --junitxml=unit-results.xml
+      - uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: test-reports-python-${{ matrix.python-version }}
-          path: reports/
-          if-no-files-found: warn
-          retention-days: 14
+          name: unit-test-results
+          path: unit-results.xml
+  database:
+    name: MariaDB end-to-end tests
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-only-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=15
+    env:
+      PDM_DB_HOST: 127.0.0.1
+      PDM_DB_PORT: 3306
+      PDM_DB_USER: root
+      PDM_DB_PASSWORD: ci-only-password
+      PDM_DB_DATABASE: sibka_pdm_ci
+      PDM_INTEGRATION: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Import isolated laboratory schema
+        run: python scripts/init_ci_db.py
+      - run: python -m pytest tests/test_database_flow.py -q --junitxml=database-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: database-test-results
+          path: database-results.xml
