@@ -18,7 +18,7 @@ thread=Thread(target=server.serve_forever,daemon=True);thread.start()
 try:
     with sync_playwright() as p:
         browser=p.chromium.launch()
-        page=browser.new_page(viewport={'width':1440,'height':1100},device_scale_factor=1)
+        page=browser.new_page(viewport={'width':1440,'height':1100},device_scale_factor=1,locale='ru-RU')
         errors=[]
         page.on('pageerror',lambda error:errors.append(str(error)))
         for path,name in [('/','01_dashboard'),('/equipment/1','02_equipment'),('/diagnostics?equipment=1&node=1','03_diagnostics'),('/orders','04_orders')]:
@@ -27,7 +27,7 @@ try:
             page.screenshot(path=str(output/(name+'.png')),full_page=True)
         page.goto('http://127.0.0.1:5001/orders/new?node=1')
         page.get_by_label('Название',exact=True).fill('Осмотр системы охлаждения двигателя SK-001')
-        page.get_by_label('Описание неисправности',exact=True).fill('Проверить систему охлаждения и крепления двигателя. По последним измерениям температура и вибрация достигли критических значений.')
+        page.get_by_label('Описание неисправности',exact=True).fill('Проверить систему охлаждения и крепления двигателя. По последним измерениям температура и вибрация превысили предупредительные пороги.')
         page.get_by_label('Плановый срок UTC',exact=True).fill((datetime.utcnow()+timedelta(days=1)).strftime('%Y-%m-%dT%H:%M'))
         page.screenshot(path=str(output/'05_new_order.png'),full_page=True)
         page.get_by_role('button',name='Сохранить заявку',exact=True).click()
