@@ -67,3 +67,9 @@ GitHub Actions запускается при каждом push, pull request в 
 - [Wiki](https://github.com/SoftyMaNA/SibKa_PdM_Project/wiki).
 - SQL исходной базы: `database/v2/SibKa_PdM_v2.sql` (использовать только при отсутствии базы).
 - Дополнительных миграций для лабораторной 7 не требуется.
+
+## Подтверждение проверки
+
+[Успешный запуск GitHub Actions](https://github.com/SoftyMaNA/SibKa_PdM_Project/actions/runs/41039604535)
+
+Результат: 104 модульные проверки и 2 интеграционных теста пройдены. Браузерный сценарий создания и поиска заявки завершён без ошибок JavaScript. В артефакте `database-test-results` находятся семь скриншотов работающего интерфейса и XML с результатами тестов.
