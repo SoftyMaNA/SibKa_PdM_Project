@@ -53,8 +53,16 @@ jobs:
       - name: Import isolated laboratory schema
         run: python scripts/init_ci_db.py
       - run: python -m pytest tests/test_database_flow.py -q --junitxml=database-results.xml
+      - name: Install browser for interface verification
+        run: |
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Verify browser scenario and capture screens
+        run: python scripts/capture_screens.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: database-test-results
-          path: database-results.xml
+          path: |
+            database-results.xml
+            docs/lab7/screenshots/
