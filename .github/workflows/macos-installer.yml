@@ -1,0 +1,80 @@
+name: Build macOS installer
+on:
+  push:
+    branches: [main]
+    paths: ['packaging/macos/**', 'docs/lab8/**', '.github/workflows/macos-installer.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    name: Package and install ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build self-contained installer
+        run: bash packaging/macos/build.sh
+      - name: Install and verify packaged application
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = '${{ matrix.arch }}'
+          sudo installer -pkg 'release/SibKa-PdM-0.8.0-macOS-${{ matrix.arch }}.pkg' -target / | tee release/install-log.txt
+          pkgutil --pkg-info ru.sibka.pdm | tee release/receipt.txt
+          '/Applications/SibKa PdM/runtime/sibka-pdm' --version
+          '/Applications/SibKa PdM/runtime/sibka-pdm' --self-test | tee release/self-test.txt
+          '/Applications/SibKa PdM/runtime/sibka-pdm' --no-browser > release/server-log.txt 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:5001/static/style.css -o /tmp/sibka-style.css; then break; fi
+            sleep 1
+          done
+          test -s /tmp/sibka-style.css
+          test "$(curl -s -o /tmp/sibka-not-found.html -w '%{http_code}' http://127.0.0.1:5001/not-found)" = 404
+          test "$(curl -s -o /tmp/sibka-db.html -w '%{http_code}' http://127.0.0.1:5001/)" = 503
+          grep -q 'config.local.json' /tmp/sibka-db.html
+          echo 'Installed runtime: CSS 200, error template 404, missing database handled as 503' | tee release/http-test.txt
+          test -f "$HOME/Library/Application Support/SibKa PdM/config.local.json"
+          echo 'Configuration created outside /Applications; SQL was not executed' >> release/http-test.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.arch }}
+          path: release/
+          retention-days: 90
+  publish:
+    name: Publish installation packages
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installer-*
+          path: packages
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          cp packages/*/*.pkg release/
+          cp database/v2/SibKa_PdM_v2.sql database/v2/Lab7_connection_checks.sql docs/lab8/INSTALL_RU.md release/
+          (cd release && sha256sum *.pkg *.sql INSTALL_RU.md > SHA256SUMS.txt)
+          if ! gh release view v0.8.0 >/dev/null 2>&1; then
+            gh release create v0.8.0 --target "$GITHUB_SHA" --title 'SibKa PdM 0.8.0 – установщик для macOS' --notes-file docs/lab8/RELEASE_NOTES.md
+          fi
+          gh release upload v0.8.0 release/* --clobber
