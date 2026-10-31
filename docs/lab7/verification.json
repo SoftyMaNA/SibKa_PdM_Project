@@ -1,0 +1,10 @@
+{
+  "commit": "96b325bbbbd7929ce3ddf392c0dcdc8034fbd181",
+  "run_url": "https://github.com/SoftyMaNA/SibKa_PdM_Project/actions/runs/41039604535",
+  "environment": "Ubuntu 24.04, Python 3.11, MariaDB 10.11, Chromium",
+  "unit_passed": 104,
+  "unit_skipped_integration_cases": 2,
+  "integration_passed": 2,
+  "browser_create_and_search_order": "success",
+  "javascript_errors": 0
+}
