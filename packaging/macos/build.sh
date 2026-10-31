@@ -13,7 +13,7 @@ mkdir -p release "$BUILD_ROOT/root/Applications/SibKa PdM"
 "$BUILD_ROOT/venv/bin/python" -m PyInstaller \
  --noconfirm --clean --onedir --name sibka-pdm \
  --paths . --distpath "$BUILD_ROOT/dist" --workpath "$BUILD_ROOT/work" --specpath "$BUILD_ROOT" \
- --add-data 'pdm/templates:pdm/templates' --add-data 'pdm/static:pdm/static' \
+ --add-data "$PWD/pdm/templates:pdm/templates" --add-data "$PWD/pdm/static:pdm/static" \
  packaging/macos/launcher.py
 DEST="$BUILD_ROOT/root/Applications/SibKa PdM"
 cp -R "$BUILD_ROOT/dist/sibka-pdm" "$DEST/runtime"
